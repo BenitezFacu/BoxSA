@@ -99,8 +99,6 @@ def agregar_items(id_ov, id_cliente, id_usr, items):
         valor = precio(id_producto)
         ejecutar("INSERT INTO ordenes_venta_det (idordenventa, idarticulo, cantidad, precio_unitario) VALUES (%s, %s, %s, %s)",
                  [id_ov, id_producto, cantidad, valor])
-        ejecutar("INSERT INTO orden_fab_detalle (idordenventa, idarticulo, cantidad) VALUES (%s, %s, %s)",
-                 [id_ov, id_producto, cantidad])
         reservar(id_ov, id_producto, cantidad, id_usr)
         subtotal += valor * cantidad
         cargados += 1
@@ -118,7 +116,7 @@ def index(request):
 
 
 def clientes(request):
-    # CAMBIO: ahora se devuelve tambien el vendedor al que pertenece cada cliente.
+    # Se devuelve tambien el vendedor de cada cliente para filtrar los clientes por vendedor.
     return respuesta("SELECT idcliente AS id, razsoc AS nombre, idusr AS idvendedor FROM clientes ORDER BY razsoc")
 
 
@@ -186,7 +184,7 @@ def guardar(request):
                     raise ErrorOV("Cliente inexistente")
                 if not existe("SELECT 1 FROM usuarios WHERE idusr = %s AND sector = 'VTA'", [id_vendedor]):
                     raise ErrorOV("Vendedor inexistente")
-                # CAMBIO: el vendedor tiene que ser el dueño del cliente
+                # el vendedor tiene que ser el dueño del cliente
                 if not existe("SELECT 1 FROM clientes WHERE idcliente = %s AND idusr = %s", [id_cliente, id_vendedor]):
                     raise ErrorOV("El cliente no pertenece a ese vendedor")
                 id_ov = ejecutar("INSERT INTO ordenes_venta_cab (idcliente, fecha_pedido, idvendedor) VALUES (%s, CURDATE(), %s)",
@@ -201,7 +199,6 @@ def guardar(request):
                 id_vendedor = cabecera[0]["idvendedor"]
                 liberar(id_ov, id_vendedor)
                 ejecutar("DELETE FROM ordenes_venta_det WHERE idordenventa = %s", [id_ov])
-                ejecutar("DELETE FROM orden_fab_detalle WHERE idordenventa = %s", [id_ov])
             agregar_items(id_ov, id_cliente, id_vendedor, items)
         return JsonResponse({"ok": True, "id": id_ov})
     except ErrorOV as e:
