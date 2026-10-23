@@ -118,7 +118,8 @@ def index(request):
 
 
 def clientes(request):
-    return respuesta("SELECT idcliente AS id, razsoc AS nombre FROM clientes ORDER BY razsoc")
+    # CAMBIO: ahora se devuelve tambien el vendedor al que pertenece cada cliente.
+    return respuesta("SELECT idcliente AS id, razsoc AS nombre, idusr AS idvendedor FROM clientes ORDER BY razsoc")
 
 
 def vendedores(request):
@@ -136,6 +137,23 @@ def productos(request):
         "THEN cantidad ELSE -cantidad END) AS stock FROM stock_movimientos GROUP BY idarticulo) s "
         "ON s.idarticulo = r.idmaterial WHERE r.idarticulo = p.idproducto), 'sin receta') AS disp "
         "FROM productos_detalle p JOIN articulos a ON a.idarticulo = p.idproducto WHERE p.idcliente = %s",
+        [id_ov, id_cliente])
+
+
+def recetas(request):
+    # NUEVO: devuelve, para cada producto del cliente, que materiales usa, cuanto por unidad
+    # y cuanto stock disponible hay de cada material (sumando lo que ya tiene reservado
+    # la OV que se esta modificando). Con esto el navegador recalcula el maximo en vivo.
+    id_cliente = a_entero(request.GET.get("cliente"))
+    id_ov = a_entero(request.GET.get("ov"))
+    return respuesta(
+        "SELECT r.idarticulo AS producto, r.idmaterial AS material, r.cantidad AS receta, "
+        "COALESCE((SELECT SUM(CASE WHEN m.tipo_movimiento IN ('Ingreso','Liberacion','Ajuste') "
+        "THEN m.cantidad ELSE -m.cantidad END) FROM stock_movimientos m WHERE m.idarticulo = r.idmaterial), 0) "
+        "+ COALESCE((SELECT SUM(rm.cantidad_reservada) FROM reservas_materiales rm "
+        "WHERE rm.idordenventa = %s AND rm.idarticulo = r.idmaterial), 0) AS disponible "
+        "FROM recetas_materiales r JOIN productos_detalle p ON p.idproducto = r.idarticulo "
+        "WHERE p.idcliente = %s",
         [id_ov, id_cliente])
 
 
@@ -168,6 +186,9 @@ def guardar(request):
                     raise ErrorOV("Cliente inexistente")
                 if not existe("SELECT 1 FROM usuarios WHERE idusr = %s AND sector = 'VTA'", [id_vendedor]):
                     raise ErrorOV("Vendedor inexistente")
+                # CAMBIO: el vendedor tiene que ser el dueño del cliente
+                if not existe("SELECT 1 FROM clientes WHERE idcliente = %s AND idusr = %s", [id_cliente, id_vendedor]):
+                    raise ErrorOV("El cliente no pertenece a ese vendedor")
                 id_ov = ejecutar("INSERT INTO ordenes_venta_cab (idcliente, fecha_pedido, idvendedor) VALUES (%s, CURDATE(), %s)",
                                  [id_cliente, id_vendedor])
             else:
