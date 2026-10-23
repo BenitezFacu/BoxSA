@@ -5,7 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Box SA - Ordenes de Venta</title>
-    <link rel="stylesheet" href="{% static 'ordenes/estilos.css' %}">
+    <link rel="stylesheet" href="{% static 'ordenes/estilos.css' %}?v=2">
+    <style>
+        /* Arreglo del borde cortado a la derecha (se puede borrar cuando estilos.css ya este actualizado) */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { overflow-x: hidden; }
+    </style>
 </head>
 <body>
 {% csrf_token %}
@@ -100,7 +105,6 @@
 <div id="aviso"></div>
 
 <footer>
-    TP SQL N°10 - Box SA - 5° año
 </footer>
 
 <script>
