@@ -64,12 +64,12 @@
         <div class="ventana-cuerpo">
             <div class="datos-orden">
                 <div>
-                    <label for="cliente">Cliente</label>
-                    <select id="cliente" onchange="cambioCliente()"></select>
+                    <label for="vendedor">Vendedor</label>
+                    <select id="vendedor" onchange="cambioVendedor()"></select>
                 </div>
                 <div>
-                    <label for="vendedor">Vendedor</label>
-                    <select id="vendedor"></select>
+                    <label for="cliente">Cliente</label>
+                    <select id="cliente" onchange="cargarProductos({})"></select>
                 </div>
             </div>
             <div class="tabla-contenedor">
@@ -207,23 +207,16 @@ function llenarSelect(select, filas, elegido) {
     if (elegido) select.value = elegido;
 }
 
-function vendedorDelCliente() {
-    for (var i = 0; i < clientesLista.length; i++) {
-        if (clientesLista[i].id == $("cliente").value) return clientesLista[i].idvendedor;
-    }
-    return 0;
-}
-
-function mostrarVendedor(idVendedor) {
+function mostrarClientes(idVendedor, elegido) {
     var filas = [];
-    for (var i = 0; i < vendedoresLista.length; i++) {
-        if (vendedoresLista[i].id == idVendedor) filas.push(vendedoresLista[i]);
+    for (var i = 0; i < clientesLista.length; i++) {
+        if (clientesLista[i].idvendedor == idVendedor) filas.push(clientesLista[i]);
     }
-    llenarSelect($("vendedor"), filas, idVendedor);
+    llenarSelect($("cliente"), filas, elegido);
 }
 
-function cambioCliente() {
-    mostrarVendedor(vendedorDelCliente());
+function cambioVendedor() {
+    mostrarClientes($("vendedor").value, 0);
     cargarProductos({});
 }
 
@@ -244,10 +237,10 @@ async function abrirVentana(id) {
             previas[detalle[i].idarticulo] = detalle[i].cantidad;
         }
     }
-    llenarSelect($("cliente"), clientesLista, idCliente);
-    mostrarVendedor(id ? idVendedor : vendedorDelCliente());
+    llenarSelect($("vendedor"), vendedoresLista, id ? idVendedor : 0);
+    mostrarClientes($("vendedor").value, id ? idCliente : 0);
+    $("vendedor").disabled = id > 0;
     $("cliente").disabled = id > 0;
-    $("vendedor").disabled = true;
     await cargarProductos(previas);
     $("ventana").classList.add("abierto");
 }
@@ -329,7 +322,7 @@ function validar() {
         }
     }
 
-    // 2) Para cada producto: maximo = lo que alcanza descontando lo que gastan los OTROS productos
+    // Para cada producto: maximo = lo que alcanza descontando lo que gastan los OTROS productos
     for (var i = 0; i < campos.length; i++) {
         var c = campos[i];
         var id = c.dataset.id;
