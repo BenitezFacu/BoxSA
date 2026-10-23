@@ -1,4 +1,3 @@
-SECRET_KEY = "clave-del-tp-box-sa"
 DEBUG = True
 ALLOWED_HOSTS = []
 

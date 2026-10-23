@@ -139,9 +139,6 @@ def productos(request):
 
 
 def recetas(request):
-    # NUEVO: devuelve, para cada producto del cliente, que materiales usa, cuanto por unidad
-    # y cuanto stock disponible hay de cada material (sumando lo que ya tiene reservado
-    # la OV que se esta modificando). Con esto el navegador recalcula el maximo en vivo.
     id_cliente = a_entero(request.GET.get("cliente"))
     id_ov = a_entero(request.GET.get("ov"))
     return respuesta(
@@ -184,7 +181,6 @@ def guardar(request):
                     raise ErrorOV("Cliente inexistente")
                 if not existe("SELECT 1 FROM usuarios WHERE idusr = %s AND sector = 'VTA'", [id_vendedor]):
                     raise ErrorOV("Vendedor inexistente")
-                # el vendedor tiene que ser el dueño del cliente
                 if not existe("SELECT 1 FROM clientes WHERE idcliente = %s AND idusr = %s", [id_cliente, id_vendedor]):
                     raise ErrorOV("El cliente no pertenece a ese vendedor")
                 id_ov = ejecutar("INSERT INTO ordenes_venta_cab (idcliente, fecha_pedido, idvendedor) VALUES (%s, CURDATE(), %s)",
